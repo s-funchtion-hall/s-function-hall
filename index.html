@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sarath Function Hall | 3D Interactive Venue</title>
+  <meta name="description" content="3D interactive website for Sarath Function Hall, Pedda Adiserla Pally, Nalgonda." />
+  <style>
+    :root {
+      --ink: #f9f4e8;
+      --muted: rgba(249, 244, 232, 0.72);
+      --dark: #07130f;
+      --panel: rgba(13, 28, 22, 0.68);
+      --panel-strong: rgba(13, 28, 22, 0.88);
+      --line: rgba(255, 255, 255, 0.15);
+      --gold: #d39b37;
+      --green: #1b5a43;
+      --blue: #2fb7d2;
+      --rose: #b85145;
+      --white: #ffffff;
+      --shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--dark);
+      color: var(--ink);
+      overflow-x: hidden;
+      letter-spacing: 0;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    svg { width: 20px; height: 20px; flex: 0 0 auto; }
+
+    .app { min-height: 100vh; }
+
+    .scene-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 74% 28%, rgba(211, 155, 55, 0.22), transparent 26%),
+        radial-gradient(circle at 22% 70%, rgba(47, 183, 210, 0.14), transparent 30%),
+        linear-gradient(135deg, #09140f, #12241c 44%, #07130f);
+    }
+
+    .scene-wrap canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .scene-wrap canvas:active { cursor: grabbing; }
+
+    .scene-shade {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(4, 12, 9, 0.82), rgba(4, 12, 9, 0.38) 45%, rgba(4, 12, 9, 0.10)),
+        linear-gradient(0deg, rgba(4, 12, 9, 0.72), transparent 36%, rgba(4, 12, 9, 0.52));
+    }
+
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 14px clamp(16px, 4vw, 52px);
+      background: rgba(7, 19, 15, 0.62);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: conic-gradient(from 130deg, var(--green), var(--gold), var(--rose), var(--green));
+      box-shadow: 0 12px 30px rgba(211, 155, 55, 0.22);
+      font-weight: 900;
+    }
+
+    .brand strong { display: block; line-height: 1.1; }
+    .brand span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-link,
+    .primary-button,
+    .ghost-button,
+    .icon-button,
+    .scene-dot {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.08);
+      transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+      font-weight: 850;
+    }
+
+    .nav-link { padding: 0 12px; color: rgba(249, 244, 232, 0.76); }
+    .nav-link.active,
+    .nav-link:hover,
+    .scene-dot.active {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.28);
+      color: var(--white);
+    }
+
+    .primary-button {
+      padding: 0 16px;
+      color: #07130f;
+      background: var(--gold);
+      border-color: rgba(211, 155, 55, 0.82);
+      box-shadow: 0 18px 45px rgba(211, 155, 55, 0.25);
+    }
+
+    .ghost-button { padding: 0 15px; }
+    .icon-button { width: 42px; padding: 0; display: none; }
+    .primary-button:hover,
+    .ghost-button:hover,
+    .icon-button:hover,
+    .scene-dot:hover { transform: translateY(-2px); }
+
+    .mobile-panel {
+      position: fixed;
+      top: 72px;
+      left: 14px;
+      right: 14px;
+      z-index: 19;
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .scroll-dots {
+      position: fixed;
+      right: clamp(14px, 2vw, 28px);
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 18;
+      display: grid;
+      gap: 10px;
+    }
+
+    .scene-dot {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border-radius: 999px;
+      position: relative;
+    }
+
+    .scene-dot span {
+      position: absolute;
+      right: 52px;
+      top: 50%;
+      transform: translateY(-50%);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      padding: 7px 10px;
+      border-radius: 8px;
+      background: rgba(7, 19, 15, 0.82);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      font-size: 0.78rem;
+    }
+
+    .scene-dot:hover span { opacity: 1; }
+
+    main {
+      position: relative;
+      z-index: 2;
+    }
+
+    .chapter {
+      min-height: 100vh;
+      display: grid;
+      align-items: center;
+      padding: 112px clamp(18px, 5vw, 72px) 70px;
+    }
+
+    .chapter-content {
+      width: min(690px, 100%);
+    }
+
+    .chapter.right .chapter-content {
+      margin-left: auto;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+      padding: clamp(22px, 4vw, 42px);
+      border-radius: 8px;
+    }
+
+    .venue-photo {
+      margin-top: 24px;
+      min-height: 260px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 18px 56px rgba(0, 0, 0, 0.28);
+      position: relative;
+    }
+
+    .venue-photo::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 34%, rgba(0, 0, 0, 0.58));
+    }
+
+    .venue-photo span {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 15px;
+      z-index: 1;
+      color: var(--white);
+      font-weight: 900;
+      text-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(249, 244, 232, 0.82);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      margin: 22px 0 16px;
+      font-size: clamp(3.3rem, 8vw, 8.2rem);
+      line-height: 0.88;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 14px;
+      font-size: clamp(2.1rem, 5vw, 5.2rem);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin-bottom: 10px;
+      font-size: clamp(1.35rem, 2.5vw, 2rem);
+      line-height: 1.05;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.72;
+      font-size: clamp(1rem, 1.45vw, 1.13rem);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 26px;
+    }
+
+    .stat,
+    .feature,
+    .photo-tile,
+    .contact-line {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+    }
+
+    .stat {
+      min-height: 104px;
+      padding: 17px;
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--gold);
+      font-size: clamp(1.35rem, 2.6vw, 2.2rem);
+      line-height: 1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      line-height: 1.35;
+      font-weight: 760;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .feature {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px;
+      color: rgba(249, 244, 232, 0.84);
+      font-weight: 780;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 99px;
+      background: var(--gold);
+      box-shadow: 0 0 18px rgba(211, 155, 55, 0.8);
+      flex: 0 0 auto;
+    }
+
+    .pool-specs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .photo-tile {
+      min-height: 170px;
+      padding: 0;
+      overflow: hidden;
+      color: var(--white);
+      text-align: left;
+      position: relative;
+    }
+
+    .photo-tile div {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      transition: transform 240ms ease;
+    }
+
+    .photo-tile::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.68));
+    }
+
+    .photo-tile strong {
+      position: absolute;
+      left: 13px;
+      right: 13px;
+      bottom: 13px;
+      z-index: 1;
+      line-height: 1.15;
+    }
+
+    .photo-tile:hover div { transform: scale(1.06); }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 16px;
+      margin-top: 22px;
+    }
+
+    .contact-line {
+      padding: 16px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .contact-line span {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .contact-line strong { line-height: 1.4; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field { display: grid; gap: 7px; }
+    .field.full { grid-column: 1 / -1; }
+    label {
+      color: rgba(249, 244, 232, 0.78);
+      font-size: 0.84rem;
+      font-weight: 850;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.10);
+      color: var(--ink);
+      padding: 11px 12px;
+      outline: none;
+    }
+
+    option { color: #07130f; }
+    textarea { min-height: 104px; resize: vertical; }
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(211, 155, 55, 0.74);
+      box-shadow: 0 0 0 4px rgba(211, 155, 55, 0.12);
+    }
+
+    .floating-whatsapp {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 24;
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: #25d366;
+      color: var(--white);
+      box-shadow: 0 18px 44px rgba(37, 211, 102, 0.34);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(12px);
+    }
+
+    .modal {
+      width: min(920px, 100%);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #0d1c16;
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+    }
+
+    .modal-image {
+      min-height: min(58vh, 540px);
+      background-size: cover;
+      background-position: center;
+    }
+
+    .modal-body {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .modal-body h3 { margin: 0; }
+    .modal-body p { margin: 4px 0 0; }
+
+    @media (max-width: 980px) {
+      .nav-links { display: none; }
+      .icon-button { display: inline-flex; }
+      .chapter, .chapter.right { align-items: end; }
+      .chapter.right .chapter-content { margin-left: 0; }
+      .stats, .contact-grid { grid-template-columns: 1fr 1fr; }
+      .gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .scroll-dots { display: none; }
+      .scene-shade {
+        background:
+          linear-gradient(0deg, rgba(4, 12, 9, 0.85), rgba(4, 12, 9, 0.28) 65%, rgba(4, 12, 9, 0.72));
+      }
+    }
+
+    @media (max-width: 650px) {
+      .brand span { display: none; }
+      .chapter { padding: 96px 14px 54px; }
+      .panel { padding: 18px; }
+      h1 { font-size: clamp(3rem, 17vw, 5.4rem); }
+      .stats, .features, .pool-specs, .gallery-grid, .contact-grid, .form-grid { grid-template-columns: 1fr; }
+      .actions, .modal-body { flex-direction: column; align-items: stretch; }
+      .primary-button, .ghost-button { width: 100%; }
+      .photo-tile { min-height: 150px; }
+      .venue-photo { min-height: 210px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.3.1",
+        "react-dom/client": "https://esm.sh/react-dom@18.3.1/client"
+      }
+    }
+  </script>
+  <script type="module">
+    import React, { useEffect, useMemo, useRef, useState } from "react";
+    import { createRoot } from "react-dom/client";
+    import { motion, AnimatePresence, useScroll, useTransform } from "https://esm.sh/framer-motion@11.18.2?deps=react@18.3.1,react-dom@18.3.1";
+    import { MapPin, Menu, Phone, X, Building2, Waves, Image, Send } from "https://esm.sh/lucide-react@0.468.0?deps=react@18.3.1";
+    import * as THREE from "https://esm.sh/three@0.165.0";
+
+    const WHATSAPP_NUMBER = "919121566036";
+    const DISPLAY_PHONE = "+91 91215 66036";
+    const MAP_URL = "https://www.google.com/maps/search/?api=1&query=Sarath%20Function%20Hall%2C%20Pedda%20Adiserla%20Pally%2C%20Nalgonda";
+
+    const sections = [
+      { id: "home", label: "Overview", icon: Building2 },
+      { id: "main-hall", label: "1000 Hall", icon: Building2 },
+      { id: "second-hall", label: "500 Hall", icon: Building2 },
+      { id: "pool", label: "Pool", icon: Waves },
+      { id: "gallery", label: "Photos", icon: Image },
+      { id: "contact", label: "Book", icon: Send }
+    ];
+
+    const photos = [
+      ["Main hall seating", "Hall 1", "assets/main-hall-seating.jpeg"],
+      ["Stage and red seating", "Hall 1", "assets/main-hall-stage.jpeg"],
+      ["Decorated function stage", "Stage", "assets/decorated-stage.jpeg"],
+      ["Dining and guest seating", "Dining", "assets/hall-dining-seating.jpeg"],
+      ["Exterior view", "Exterior", "assets/hall-exterior-day.jpeg"],
+      ["Night exterior", "Exterior", "assets/hall-exterior-night.jpeg"]
+    ].map(([title, type, image]) => ({ title, type, image }));
+
+    const photoById = {
+      home: "assets/hall-exterior-day.jpeg",
+      "main-hall": "assets/main-hall-seating.jpeg",
+      "second-hall": "assets/main-hall-stage.jpeg",
+      pool: "assets/hall-exterior-night.jpeg",
+      gallery: "assets/decorated-stage.jpeg",
+      contact: "assets/hall-dining-seating.jpeg"
+    };
+
+    const whatsappIcon = React.createElement(
+      "svg",
+      { viewBox: "0 0 24 24", fill: "currentColor", "aria-hidden": true },
+      React.createElement("path", { d: "M20.52 3.48A11.76 11.76 0 0 0 12.14 0C5.64 0 .35 5.28.35 11.78c0 2.08.54 4.1 1.58 5.9L.25 23.82l6.28-1.65a11.8 11.8 0 0 0 5.61 1.43h.01c6.5 0 11.79-5.28 11.79-11.78 0-3.15-1.23-6.11-3.42-8.34Zm-8.37 18.13h-.01a9.78 9.78 0 0 1-4.98-1.36l-.36-.21-3.73.98.99-3.64-.24-.37a9.77 9.77 0 0 1-1.5-5.23c0-5.41 4.41-9.81 9.83-9.81 2.62 0 5.09 1.02 6.94 2.88a9.75 9.75 0 0 1 2.88 6.95c0 5.41-4.4 9.81-9.82 9.81Zm5.39-7.34c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.95 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.48-1.76-1.65-2.05-.17-.3-.02-.46.13-.61.13-.13.3-.35.44-.52.15-.17.2-.3.3-.49.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.91-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.01-1.04 2.47 0 1.46 1.06 2.87 1.21 3.06.15.2 2.09 3.19 5.06 4.47.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.29.17-1.41-.07-.13-.27-.2-.56-.35Z" })
+    );
+
+    function waLink(message) {
+      return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    }
+
+    function goTo(id) {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function VenueScene({ active }) {
+      const mountRef = useRef(null);
+      const activeRef = useRef(active);
+
+      useEffect(() => {
+        activeRef.current = active;
+      }, [active]);
+
+      useEffect(() => {
+        const mount = mountRef.current;
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0x07130f, 20, 54);
+
+        const camera = new THREE.PerspectiveCamera(43, 1, 0.1, 120);
+        camera.position.set(8, 8, 16);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setClearColor(0x000000, 0);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        mount.appendChild(renderer.domElement);
+
+        const root = new THREE.Group();
+        scene.add(root);
+
+        scene.add(new THREE.HemisphereLight(0xfff0ce, 0x0b332b, 2.4));
+        const sun = new THREE.DirectionalLight(0xffd78a, 2.8);
+        sun.position.set(-8, 14, 10);
+        sun.castShadow = true;
+        sun.shadow.mapSize.set(1024, 1024);
+        scene.add(sun);
+
+        const poolGlow = new THREE.PointLight(0x55ddff, 3.4, 17);
+        poolGlow.position.set(4.4, 1.4, -3.2);
+        scene.add(poolGlow);
+
+        const mat = {
+          ground: new THREE.MeshStandardMaterial({ color: 0x26332a, roughness: 0.82 }),
+          path: new THREE.MeshStandardMaterial({ color: 0xc3903a, roughness: 0.62, metalness: 0.12 }),
+          building: new THREE.MeshStandardMaterial({ color: 0xf1ddb9, roughness: 0.52 }),
+          roof: new THREE.MeshStandardMaterial({ color: 0xb85145, roughness: 0.58 }),
+          glass: new THREE.MeshStandardMaterial({ color: 0x9fe3ef, roughness: 0.16, transparent: true, opacity: 0.74 }),
+          water: new THREE.MeshStandardMaterial({ color: 0x28c4df, roughness: 0.1, transparent: true, opacity: 0.76 }),
+          chair: new THREE.MeshStandardMaterial({ color: 0xfff4df, roughness: 0.55 }),
+          tree: new THREE.MeshStandardMaterial({ color: 0x2f824d, roughness: 0.7 }),
+          trunk: new THREE.MeshStandardMaterial({ color: 0x7d5431, roughness: 0.75 })
+        };
+
+        const ground = new THREE.Mesh(new THREE.BoxGeometry(18, 0.26, 13), mat.ground);
+        ground.position.y = -0.15;
+        ground.receiveShadow = true;
+        root.add(ground);
+
+        const path = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.06, 12), mat.path);
+        path.position.set(-0.2, 0.04, 0);
+        path.receiveShadow = true;
+        root.add(path);
+
+        function hall(name, x, z, w, d, h) {
+          const group = new THREE.Group();
+          group.name = name;
+          group.position.set(x, 0, z);
+
+          const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat.building);
+          body.position.y = h / 2;
+          body.castShadow = true;
+          body.receiveShadow = true;
+          group.add(body);
+
+          const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w, d) * 0.72, 1.15, 4), mat.roof);
+          roof.position.y = h + 0.66;
+          roof.rotation.y = Math.PI / 4;
+          roof.castShadow = true;
+          group.add(roof);
+
+          const door = new THREE.Mesh(new THREE.BoxGeometry(w * 0.24, h * 0.58, 0.08), mat.glass);
+          door.position.set(0, h * 0.34, d / 2 + 0.05);
+          group.add(door);
+
+          for (let i = -1; i <= 1; i += 1) {
+            const win = new THREE.Mesh(new THREE.BoxGeometry(w * 0.15, h * 0.22, 0.07), mat.glass);
+            win.position.set(i * w * 0.28, h * 0.64, d / 2 + 0.05);
+            group.add(win);
+          }
+
+          root.add(group);
+          return group;
+        }
+
+        const mainHall = hall("main-hall", -3.35, -1.35, 5.7, 4.2, 2.55);
+        const secondHall = hall("second-hall", 3.15, 1.55, 4.15, 3.1, 2.05);
+        const dining = hall("dining", -3.95, 3.25, 3.7, 2.15, 1.65);
+
+        const pool = new THREE.Group();
+        pool.name = "pool";
+        const deck = new THREE.Mesh(new THREE.BoxGeometry(5.25, 0.16, 2.2), new THREE.MeshStandardMaterial({ color: 0xf8efdd, roughness: 0.72 }));
+        deck.receiveShadow = true;
+        pool.add(deck);
+        const water = new THREE.Mesh(new THREE.BoxGeometry(4.7, 0.08, 1.5), mat.water);
+        water.position.y = 0.14;
+        pool.add(water);
+        pool.position.set(4.4, 0.13, -3.3);
+        root.add(pool);
+
+        for (let row = 0; row < 6; row += 1) {
+          for (let col = 0; col < 10; col += 1) {
+            const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.14, 12), mat.chair);
+            seat.position.set(-6.2 + col * 0.42, 0.17, -5.05 + row * 0.32);
+            seat.castShadow = true;
+            root.add(seat);
+          }
+        }
+
+        [[-7.8, -5.2], [7.6, -5.2], [-7.8, 5.2], [7.5, 5.1], [0.2, 5.4]].forEach(([x, z]) => {
+          const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.85, 10), mat.trunk);
+          trunk.position.set(x, 0.42, z);
+          trunk.castShadow = true;
+          root.add(trunk);
+          const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(0.62), mat.tree);
+          crown.position.set(x, 1.14, z);
+          crown.castShadow = true;
+          root.add(crown);
+        });
+
+        const bulbs = [];
+        for (let i = 0; i < 42; i += 1) {
+          const bulb = new THREE.Mesh(
+            new THREE.SphereGeometry(0.045, 12, 12),
+            new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffdb91 : 0xffffff })
+          );
+          const t = i / 41;
+          bulb.position.set(-7.8 + t * 15.6, 3.85 + Math.sin(t * Math.PI * 4) * 0.24, -5.75);
+          bulbs.push(bulb);
+          root.add(bulb);
+        }
+
+        const focus = {
+          home: { pos: [8.4, 7.4, 15.5], look: [0, 0.9, 0], rot: 0 },
+          "main-hall": { pos: [0.7, 5.1, 8.7], look: [-3.35, 1.15, -1.35], rot: -0.12 },
+          "second-hall": { pos: [6.6, 4.45, 6.8], look: [3.15, 1, 1.55], rot: 0.1 },
+          pool: { pos: [7.8, 4.35, 1.15], look: [4.4, 0.35, -3.3], rot: 0.22 },
+          gallery: { pos: [-6.9, 5.35, 7.8], look: [-0.8, 1, -0.4], rot: -0.28 },
+          contact: { pos: [8.8, 6.4, 12.5], look: [0.2, 0.9, 0], rot: 0.38 }
+        };
+
+        const pointer = { x: 0, y: 0, down: false, lastX: 0, drag: 0 };
+        const onPointerMove = (event) => {
+          const rect = renderer.domElement.getBoundingClientRect();
+          pointer.x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+          pointer.y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+          if (pointer.down) {
+            pointer.drag += (event.clientX - pointer.lastX) * 0.006;
+            pointer.lastX = event.clientX;
+          }
+        };
+        const onPointerDown = (event) => {
+          pointer.down = true;
+          pointer.lastX = event.clientX;
+          renderer.domElement.setPointerCapture?.(event.pointerId);
+        };
+        const onPointerUp = (event) => {
+          pointer.down = false;
+          renderer.domElement.releasePointerCapture?.(event.pointerId);
+        };
+        renderer.domElement.addEventListener("pointermove", onPointerMove);
+        renderer.domElement.addEventListener("pointerdown", onPointerDown);
+        renderer.domElement.addEventListener("pointerup", onPointerUp);
+        renderer.domElement.addEventListener("pointerleave", onPointerUp);
+
+        const resize = () => {
+          const width = mount.clientWidth || 1;
+          const height = mount.clientHeight || 1;
+          renderer.setSize(width, height, false);
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+        };
+        window.addEventListener("resize", resize);
+        resize();
+
+        let raf = 0;
+        let t = 0;
+        const lookTarget = new THREE.Vector3();
+        const desiredCamera = new THREE.Vector3();
+        const desiredLook = new THREE.Vector3();
+
+        function highlight(name, value) {
+          const scale = 1 + value * 0.035;
+          if (name === "main-hall") mainHall.scale.lerp(new THREE.Vector3(scale, scale, scale), 0.08);
+          if (name === "second-hall") secondHall.scale.lerp(new THREE.Vector3(scale, scale, scale), 0.08);
+          if (name === "pool") pool.scale.lerp(new THREE.Vector3(scale, scale, scale), 0.08);
+          if (name !== "main-hall") mainHall.scale.lerp(new THREE.Vector3(1, 1, 1), 0.05);
+          if (name !== "second-hall") secondHall.scale.lerp(new THREE.Vector3(1, 1, 1), 0.05);
+          if (name !== "pool") pool.scale.lerp(new THREE.Vector3(1, 1, 1), 0.05);
+        }
+
+        const animate = () => {
+          t += 0.012;
+          const key = focus[activeRef.current] ? activeRef.current : "home";
+          const target = focus[key];
+
+          desiredCamera.set(target.pos[0] + pointer.x * 0.48, target.pos[1] - pointer.y * 0.28, target.pos[2]);
+          desiredLook.set(target.look[0], target.look[1], target.look[2]);
+          camera.position.lerp(desiredCamera, 0.046);
+          lookTarget.lerp(desiredLook, 0.055);
+          camera.lookAt(lookTarget);
+
+          const targetRotation = target.rot + (pointer.down ? pointer.drag : Math.sin(t) * 0.055);
+          root.rotation.y += (targetRotation - root.rotation.y) * 0.045;
+          water.position.y = 0.14 + Math.sin(t * 3.1) * 0.026;
+          water.scale.z = 1 + Math.sin(t * 2.2) * 0.03;
+          bulbs.forEach((bulb, i) => bulb.scale.setScalar(1 + Math.sin(t * 4 + i) * 0.18));
+          highlight(key, 1 + Math.sin(t * 4) * 0.5);
+
+          renderer.render(scene, camera);
+          raf = window.requestAnimationFrame(animate);
+        };
+        animate();
+
+        return () => {
+          window.cancelAnimationFrame(raf);
+          window.removeEventListener("resize", resize);
+          renderer.domElement.removeEventListener("pointermove", onPointerMove);
+          renderer.domElement.removeEventListener("pointerdown", onPointerDown);
+          renderer.domElement.removeEventListener("pointerup", onPointerUp);
+          renderer.domElement.removeEventListener("pointerleave", onPointerUp);
+          renderer.dispose();
+          mount.removeChild(renderer.domElement);
+        };
+      }, []);
+
+      return React.createElement("div", { className: "scene-wrap", ref: mountRef, "aria-label": "Interactive 3D venue scene" });
+    }
+
+    function Chapter({ id, side = "left", eyebrow, title, children }) {
+      return React.createElement(
+        "section",
+        { id, className: `chapter ${side === "right" ? "right" : ""}` },
+        React.createElement(
+          motion.div,
+          {
+            className: "chapter-content",
+            initial: { opacity: 0, y: 36 },
+            whileInView: { opacity: 1, y: 0 },
+            viewport: { once: false, amount: 0.42 },
+            transition: { duration: 0.55, ease: "easeOut" }
+          },
+          React.createElement("div", { className: "panel" },
+            React.createElement("div", { className: "eyebrow" }, eyebrow),
+            React.createElement(id === "home" ? "h1" : "h2", null, title),
+            children
+          )
+        )
+      );
+    }
+
+    function App() {
+      const [menuOpen, setMenuOpen] = useState(false);
+      const [active, setActive] = useState("home");
+      const [selectedPhoto, setSelectedPhoto] = useState(null);
+      const [form, setForm] = useState({
+        name: "",
+        date: "",
+        event: "Wedding",
+        hall: "1000 seater hall",
+        guests: "",
+        note: ""
+      });
+
+      const { scrollYProgress } = useScroll();
+      const progressWidth = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
+      useEffect(() => {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) setActive(entry.target.id);
+            });
+          },
+          { threshold: 0.5 }
+        );
+        sections.forEach((section) => {
+          const node = document.getElementById(section.id);
+          if (node) observer.observe(node);
+        });
+        return () => observer.disconnect();
+      }, []);
+
+      const bookingMessage = useMemo(() => {
+        return [
+          "Hello Sarath Function Hall, I want to enquire about booking.",
+          form.name ? `Name: ${form.name}` : "",
+          form.date ? `Event date: ${form.date}` : "",
+          `Event type: ${form.event}`,
+          `Preferred space: ${form.hall}`,
+          form.guests ? `Guests: ${form.guests}` : "",
+          form.note ? `Details: ${form.note}` : ""
+        ].filter(Boolean).join("\\n");
+      }, [form]);
+
+      const onFormChange = (event) => {
+        const { name, value } = event.target;
+        setForm((current) => ({ ...current, [name]: value }));
+      };
+
+      return React.createElement(
+        "div",
+        { className: "app" },
+        React.createElement(VenueScene, { active }),
+        React.createElement("div", { className: "scene-shade" }),
+        React.createElement(motion.div, {
+          style: { scaleX: scrollYProgress, transformOrigin: "0% 50%", position: "fixed", left: 0, right: 0, top: 0, height: 3, background: "#d39b37", zIndex: 50 }
+        }),
+
+        React.createElement("nav", { className: "nav" },
+          React.createElement("a", { className: "brand", href: "#home", onClick: (e) => { e.preventDefault(); goTo("home"); } },
+            React.createElement("div", { className: "brand-mark" }, "S"),
+            React.createElement("div", null,
+              React.createElement("strong", null, "Sarath Function Hall"),
+              React.createElement("span", null, "Pedda Adiserla Pally, Nalgonda")
+            )
+          ),
+          React.createElement("div", { className: "nav-links" },
+            sections.map(({ id, label }) => React.createElement("button", {
+              key: id,
+              className: `nav-link ${active === id ? "active" : ""}`,
+              type: "button",
+              onClick: () => goTo(id)
+            }, label)),
+            React.createElement("a", { className: "primary-button", href: waLink("Hello Sarath Function Hall, I want to know availability."), target: "_blank", rel: "noreferrer" }, whatsappIcon, "WhatsApp")
+          ),
+          React.createElement("button", { className: "icon-button", type: "button", onClick: () => setMenuOpen((open) => !open), "aria-label": "Open menu" },
+            React.createElement(menuOpen ? X : Menu, { size: 20, strokeWidth: 2.2 })
+          )
+        ),
+
+        React.createElement(AnimatePresence, null,
+          menuOpen && React.createElement(motion.div, {
+            className: "mobile-panel",
+            initial: { opacity: 0, y: -10 },
+            animate: { opacity: 1, y: 0 },
+            exit: { opacity: 0, y: -10 },
+            transition: { duration: 0.18 }
+          },
+            sections.map(({ id, label }) => React.createElement("button", {
+              key: id,
+              className: `nav-link ${active === id ? "active" : ""}`,
+              type: "button",
+              onClick: () => { setMenuOpen(false); goTo(id); }
+            }, label)),
+            React.createElement("a", { className: "primary-button", href: waLink("Hello Sarath Function Hall, I want to know availability."), target: "_blank", rel: "noreferrer" }, whatsappIcon, "WhatsApp")
+          )
+        ),
+
+        React.createElement("div", { className: "scroll-dots", "aria-label": "3D scroll navigation" },
+          sections.map(({ id, label, icon: Icon }) => React.createElement("button", {
+            key: id,
+            className: `scene-dot ${active === id ? "active" : ""}`,
+            type: "button",
+            onClick: () => goTo(id),
+            "aria-label": label
+          }, React.createElement(Icon, { size: 18, strokeWidth: 2.2 }), React.createElement("span", null, label)))
+        ),
+
+        React.createElement("main", null,
+          React.createElement(Chapter, { id: "home", eyebrow: React.createElement(React.Fragment, null, React.createElement(MapPin, { size: 16 }), "3D venue tour"), title: "Sarath Function Hall" },
+            React.createElement("p", null, "Scroll to move through an interactive 3D model of the venue. Drag the scene to rotate it, then jump between the main hall, second hall, pool, gallery, and booking section."),
+            React.createElement("div", { className: "actions" },
+              React.createElement("a", { className: "primary-button", href: waLink("Hello Sarath Function Hall, I want to book a visit."), target: "_blank", rel: "noreferrer" }, whatsappIcon, "Book on WhatsApp"),
+              React.createElement("a", { className: "ghost-button", href: MAP_URL, target: "_blank", rel: "noreferrer" }, React.createElement(MapPin, { size: 20 }), "Open Location")
+            ),
+            React.createElement("div", { className: "stats" },
+              [["1000", "Main hall seating"], ["500", "Second hall seating"], ["70 x 20 ft", "Swimming pool"], ["5 ft", "Pool depth"]].map(([value, label]) => React.createElement("div", { className: "stat", key: label }, React.createElement("strong", null, value), React.createElement("span", null, label)))
+            ),
+            React.createElement("div", { className: "venue-photo", style: { backgroundImage: `url("${photoById.home}")` } }, React.createElement("span", null, "Actual exterior view of Sarath Function Hall"))
+          ),
+
+          React.createElement(Chapter, { id: "main-hall", side: "right", eyebrow: "3D focus: Main hall", title: "1000 seater hall with dining access." },
+            React.createElement("p", null, "The scroll camera moves closer to the main hall so visitors immediately understand the scale for weddings, receptions, and larger family gatherings."),
+            React.createElement("div", { className: "features" },
+              ["1000 seating capacity", "Dining hall support", "Large wedding flow", "Best for grand functions"].map((item) => React.createElement("div", { className: "feature", key: item }, React.createElement("span", { className: "dot" }), item))
+            ),
+            React.createElement("div", { className: "venue-photo", style: { backgroundImage: `url("${photoById["main-hall"]}")` } }, React.createElement("span", null, "Actual main hall seating with decorated roof canopy"))
+          ),
+
+          React.createElement(Chapter, { id: "second-hall", eyebrow: "3D focus: Second hall", title: "500 seater hall for medium events." },
+            React.createElement("p", null, "This section shifts the 3D camera to the second hall, ideal for receptions, engagements, birthdays, meetings, and comfortable family functions."),
+            React.createElement("div", { className: "features" },
+              ["500 seating capacity", "Flexible arrangement", "Family functions", "Easy guest movement"].map((item) => React.createElement("div", { className: "feature", key: item }, React.createElement("span", { className: "dot" }), item))
+            ),
+            React.createElement("div", { className: "venue-photo", style: { backgroundImage: `url("${photoById["second-hall"]}")` } }, React.createElement("span", null, "Actual hall setup with stage and red seating"))
+          ),
+
+          React.createElement(Chapter, { id: "pool", side: "right", eyebrow: "3D focus: Swimming pool", title: "70 ft by 20 ft pool with 5 ft depth." },
+            React.createElement("p", null, "The pool is modeled inside the 3D scene with animated water, making the venue feel more premium and memorable for guests."),
+            React.createElement("div", { className: "pool-specs" },
+              [["70 ft", "Length"], ["20 ft", "Breadth"], ["5 ft", "Depth"]].map(([value, label]) => React.createElement("div", { className: "stat", key: label }, React.createElement("strong", null, value), React.createElement("span", null, label)))
+            ),
+            React.createElement("div", { className: "venue-photo", style: { backgroundImage: `url("${photoById.pool}")` } }, React.createElement("span", null, "Actual night exterior and open venue space"))
+          ),
+
+          React.createElement(Chapter, { id: "gallery", eyebrow: "Real venue photos", title: "Actual photos of Sarath Function Hall." },
+            React.createElement("p", null, "These images are now from your venue: hall seating, stage setup, decoration, dining arrangement, and exterior views."),
+            React.createElement("div", { className: "gallery-grid" },
+              photos.map((photo) => React.createElement("button", { className: "photo-tile", key: photo.title, type: "button", onClick: () => setSelectedPhoto(photo) },
+                React.createElement("div", { style: { backgroundImage: `url("${photo.image}")` } }),
+                React.createElement("strong", null, photo.title)
+              ))
+            )
+          ),
+
+          React.createElement(Chapter, { id: "contact", side: "right", eyebrow: "Booking and contact", title: "Send an enquiry directly on WhatsApp." },
+            React.createElement("p", null, "Owner contact: Akkiraju Sarath Babu. Location: Sarath Function Hall, Pedda Adiserla Pally, Nalgonda."),
+            React.createElement("div", { className: "contact-grid" },
+              React.createElement("div", null,
+                React.createElement("div", { className: "contact-line" }, React.createElement("span", null, "Contact person"), React.createElement("strong", null, "Akkiraju Sarath Babu")),
+                React.createElement("div", { className: "contact-line" }, React.createElement("span", null, "Phone / WhatsApp"), React.createElement("strong", null, DISPLAY_PHONE)),
+                React.createElement("div", { className: "actions" },
+                  React.createElement("a", { className: "primary-button", href: waLink("Hello Sarath Function Hall, I want to visit the venue."), target: "_blank", rel: "noreferrer" }, whatsappIcon, "WhatsApp Now"),
+                  React.createElement("a", { className: "ghost-button", href: `tel:${DISPLAY_PHONE.replaceAll(" ", "")}` }, React.createElement(Phone, { size: 20 }), "Call")
+                )
+              ),
+              React.createElement("form", { onSubmit: (event) => { event.preventDefault(); window.open(waLink(bookingMessage), "_blank", "noopener,noreferrer"); } },
+                React.createElement("div", { className: "form-grid" },
+                  React.createElement("div", { className: "field" }, React.createElement("label", { htmlFor: "name" }, "Name"), React.createElement("input", { id: "name", name: "name", value: form.name, onChange: onFormChange, placeholder: "Your name" })),
+                  React.createElement("div", { className: "field" }, React.createElement("label", { htmlFor: "date" }, "Event date"), React.createElement("input", { id: "date", name: "date", type: "date", value: form.date, onChange: onFormChange })),
+                  React.createElement("div", { className: "field" }, React.createElement("label", { htmlFor: "event" }, "Event type"), React.createElement("select", { id: "event", name: "event", value: form.event, onChange: onFormChange }, ["Wedding", "Reception", "Engagement", "Birthday", "Meeting", "Other"].map((item) => React.createElement("option", { key: item }, item)))),
+                  React.createElement("div", { className: "field" }, React.createElement("label", { htmlFor: "hall" }, "Preferred space"), React.createElement("select", { id: "hall", name: "hall", value: form.hall, onChange: onFormChange }, ["1000 seater hall", "500 seater hall", "Poolside", "Need suggestion"].map((item) => React.createElement("option", { key: item }, item)))),
+                  React.createElement("div", { className: "field" }, React.createElement("label", { htmlFor: "guests" }, "Guests"), React.createElement("input", { id: "guests", name: "guests", inputMode: "numeric", value: form.guests, onChange: onFormChange, placeholder: "Approx. count" })),
+                  React.createElement("div", { className: "field" }, React.createElement("label", { htmlFor: "phone" }, "Venue number"), React.createElement("input", { id: "phone", value: DISPLAY_PHONE, readOnly: true })),
+                  React.createElement("div", { className: "field full" }, React.createElement("label", { htmlFor: "note" }, "Message"), React.createElement("textarea", { id: "note", name: "note", value: form.note, onChange: onFormChange, placeholder: "Tell us your function details" }))
+                ),
+                React.createElement("div", { className: "actions" }, React.createElement("button", { className: "primary-button", type: "submit" }, whatsappIcon, "Send via WhatsApp"))
+              )
+            )
+          )
+        ),
+
+        React.createElement("a", { className: "floating-whatsapp", href: waLink("Hello Sarath Function Hall, I want to know availability."), target: "_blank", rel: "noreferrer", "aria-label": "Open WhatsApp" }, whatsappIcon),
+
+        React.createElement(AnimatePresence, null,
+          selectedPhoto && React.createElement(motion.div, { className: "modal-backdrop", initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, onClick: () => setSelectedPhoto(null) },
+            React.createElement(motion.div, { className: "modal", initial: { opacity: 0, y: 24, scale: 0.97 }, animate: { opacity: 1, y: 0, scale: 1 }, exit: { opacity: 0, y: 24, scale: 0.97 }, transition: { duration: 0.22 }, onClick: (event) => event.stopPropagation() },
+              React.createElement("div", { className: "modal-image", style: { backgroundImage: `url("${selectedPhoto.image}")` } }),
+              React.createElement("div", { className: "modal-body" },
+                React.createElement("div", null, React.createElement("h3", null, selectedPhoto.title), React.createElement("p", null, `${selectedPhoto.type} photo placeholder`)),
+                React.createElement("button", { className: "ghost-button", type: "button", onClick: () => setSelectedPhoto(null) }, "Close")
+              )
+            )
+          )
+        )
+      );
+    }
+
+    createRoot(document.getElementById("root")).render(React.createElement(App));
+  </script>
+</body>
+</html>
